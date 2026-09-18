@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>나의 일기장</title>
+<style>
+body{font-family:"Malgun Gothic",sans-serif;max-width:950px;margin:25px auto;padding:0 16px;background:#f6f6f6;color:#222}
+h1{margin-bottom:5px}.small{color:#666}.box{background:#fff;border:1px solid #ddd;border-radius:12px;padding:18px;margin:14px 0}
+label{display:block;font-weight:700;margin:8px 0 5px}.grid{display:grid;grid-template-columns:220px 1fr;gap:12px}
+input,textarea,button{font-family:"Malgun Gothic",sans-serif;font-size:16px;box-sizing:border-box}
+input,textarea{width:100%;padding:10px;border:1px solid #bbb;border-radius:8px}
+textarea{min-height:260px;resize:vertical}button{padding:9px 14px;border:1px solid #aaa;background:#fff;border-radius:8px;cursor:pointer}
+.main{background:#222;color:#fff}.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.entry{padding:16px 0;border-bottom:1px solid #ddd}.entry:last-child{border-bottom:0}
+.entry-date{font-weight:700}.entry-title{font-size:19px;font-weight:700;margin:5px 0}.entry-text{white-space:pre-wrap;line-height:1.65}
+#resultCount{font-weight:700;margin-bottom:8px}.notice{padding:18px;text-align:center;color:#777}
+mark{background:#fff0a8}
+@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style>
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="나의 일기">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+@media(max-width:700px){
+ body{margin:0;padding:max(14px,env(safe-area-inset-top)) 12px max(24px,env(safe-area-inset-bottom));}
+ .container,.wrap,main{max-width:100%!important;width:auto!important}
+ input,textarea,button,select{font-size:16px!important}
+ textarea{min-height:220px}
+ .buttons{gap:7px;flex-wrap:wrap}
+ button{min-height:42px}
+}
+</style>
+</head>
+<body>
+<div id="lockScreen" style="max-width:420px;margin:90px auto;padding:28px;background:#fff;border:1px solid #ddd;border-radius:14px;text-align:center">
+ <h1>🔒 나의 일기장</h1>
+ <p class="small">처음 실행 시 사용할 비밀번호를 입력하세요. 이후에는 같은 비밀번호로 잠금을 해제합니다..</p>
+ <input id="lockPassword" type="password" inputmode="numeric" maxlength="20" placeholder="비밀번호" style="text-align:center;font-size:20px">
+ <div class="buttons" style="justify-content:center"><button class="main" onclick="unlockDiary()">일기장 열기</button></div>
+ <p id="lockError" style="color:#b00020;font-weight:700"></p>
+</div>
+<div id="diaryApp" style="display:none">
+<h1>나의 일기장</h1>
+<p class="small">한글로 자유롭게 작성하고, 날짜 또는 단어로 지난 일기를 찾을 수 있습니다. <span id="browserStatus"></span></p>
+
+<div class="box">
+ <div class="grid">
+  <div><label>날짜</label><input id="date" type="date"></div>
+  <div><label>제목</label><input id="title" type="text" placeholder="예: 가평 여행"></div>
+ </div>
+ <label>일기 내용</label>
+ <textarea id="content" placeholder="오늘 있었던 일을 한글로 적어보세요."></textarea>
+ <label>첨부파일</label>
+ <input id="attachments" type="file" multiple accept="image/*,.xlsx,.xls,.csv,.pdf,.doc,.docx,.txt,.zip">
+ <div id="attachInfo" class="small" style="margin-top:6px">사진, Excel, PDF, Word 등 여러 파일을 첨부할 수 있습니다.</div>
+ <div class="buttons"><button class="main" onclick="saveDiary()">일기 저장</button><button onclick="newDiary()">새 일기</button></div>
+</div>
+
+<div class="box">
+ <h2>과거 일기 검색</h2>
+ <div class="grid">
+  <div><label>날짜로 찾기</label><input id="findDate" type="date"></div>
+  <div><label>단어로 찾기</label><input id="findWord" type="text" placeholder="예: 가평, 회사, 친구"></div>
+ </div>
+ <div class="buttons"><button class="main" onclick="searchDiary()">검색</button><button onclick="showAll()">전체 일기</button><button onclick="clearSearch()">검색 초기화</button></div>
+</div>
+
+<div class="box">
+ <div id="resultCount"></div>
+ <div id="results"></div>
+</div>
+
+<div class="box">
+ <h2>일기 관리</h2>
+ <div class="grid">
+  <div><label>날짜별 숨기기</label><input id="hideDate" type="date"></div>
+  <div>
+   <label>숨김 일기</label>
+   <div class="buttons">
+    <button onclick="hideByDate()">선택 날짜 숨기기</button>
+    <button onclick="showHidden()">숨긴 일기 보기</button>
+    <button onclick="unhideAll()">전체 숨김 해제</button>
+   </div>
+  </div>
+ </div>
+ <div class="buttons" style="margin-top:18px">
+  <button onclick="deleteAllDiaries()" style="border-color:#b00020;color:#b00020;font-weight:700">전체 일기 삭제</button>
+ </div>
+ <p class="small">숨긴 일기는 일반 목록과 검색 결과에서 보이지 않지만 삭제되지는 않습니다.</p>
+</div>
+
+<div class="box">
+ <b>백업</b><div class="buttons"><button onclick="saveToBrowser()">브라우저에 저장</button><button onclick="exportDOCX()">Word(.docx)로 전체 백업</button><button onclick="exportXLSX()">Excel(.xlsx)로 전체 백업</button></div>
+ <p class="small">일기는 현재 브라우저에 저장됩니다. Word 또는 Excel로 전체 일기를 보관할 수 있습니다. 첨부파일은 브라우저 저장공간을 사용하므로 큰 파일을 많이 넣으면 저장 한도에 도달할 수 있습니다.</p>
+</div>
+
+<script>
+const KEY="korean_diary_v2"; let editingId=null;
+const el=id=>document.getElementById(id);
+
+let unlocked=false, diaryCache=[];
+const ENC_KEY=KEY+"_encrypted";
+const LEGACY_KEY=KEY;
+let SESSION_PASSWORD="";
+
+const AUTH_KEY="diary_auth_v2";
+async function sha256hex(s){
+ const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
+ return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+async function deriveVerifier(password,salt){
+ return await sha256hex("DIARY|"+salt+"|"+password);
+}
+function randHex(n=16){
+ const a=new Uint8Array(n);crypto.getRandomValues(a);
+ return [...a].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+async function ensurePassword(password){
+ let auth=null;try{auth=JSON.parse(localStorage.getItem(AUTH_KEY)||"null")}catch(e){}
+ if(!auth){
+   if(!password || password.length<4) throw new Error("비밀번호는 4자리 이상으로 설정해 주세요.");
+   const salt=randHex(16), verifier=await deriveVerifier(password,salt);
+   localStorage.setItem(AUTH_KEY,JSON.stringify({salt,verifier}));
+   SESSION_PASSWORD=password;
+   return true;
+ }
+ const verifier=await deriveVerifier(password,auth.salt);
+ if(verifier!==auth.verifier) return false;
+ SESSION_PASSWORD=password;
+ return true;
+}
+
+async function deriveKey(password,salt){
+ const material=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveKey"]);
+ return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:250000,hash:"SHA-256"},material,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+}
+function b64(a){let s="";for(let b of new Uint8Array(a))s+=String.fromCharCode(b);return btoa(s)}
+function unb64(s){let b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+async function encryptAndStore(a){
+ const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+ const key=await deriveKey(SESSION_PASSWORD,salt);
+ const cipher=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,new TextEncoder().encode(JSON.stringify(a)));
+ localStorage.setItem(ENC_KEY,JSON.stringify({v:1,salt:b64(salt),iv:b64(iv),data:b64(cipher)}));
+ localStorage.removeItem(LEGACY_KEY);
+ diaryCache=a;
+ updateBrowserStatus();
+}
+async function decryptStored(password){
+ const raw=localStorage.getItem(ENC_KEY);
+ if(!raw)return null;
+ const o=JSON.parse(raw),salt=unb64(o.salt),iv=unb64(o.iv),data=unb64(o.data);
+ const key=await deriveKey(password,salt);
+ const plain=await crypto.subtle.decrypt({name:"AES-GCM",iv},key,data);
+ return JSON.parse(new TextDecoder().decode(plain));
+}
+function diaries(){return diaryCache}
+function put(a){diaryCache=a; encryptAndStore(a).catch(()=>alert("암호화 저장 중 오류가 발생했습니다."))}
+async function unlockDiary(){
+ const p=el("lockPassword").value;
+ if(p!==SESSION_PASSWORD){el("lockError").textContent="비밀번호가 올바르지 않습니다.";el("lockPassword").value="";return}
+ try{
+  let a=await decryptStored(p);
+  if(a===null){
+   try{a=JSON.parse(localStorage.getItem(LEGACY_KEY)||"[]")}catch(e){a=[]}
+   await encryptAndStore(Array.isArray(a)?a:[]);
+  }
+  diaryCache=Array.isArray(a)?a:[];
+  unlocked=true;
+  el("lockScreen").style.display="none";el("diaryApp").style.display="block";
+  newDiary();showAll();updateBrowserStatus();
+ }catch(e){
+  el("lockError").textContent="암호화 데이터를 열 수 없습니다.";
+ }
+}
+
+function today(){let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function isPastDate(d){return d < today()}
+function savedTime(x){
+ const t=x.created||x.updated;
+ if(!t)return "";
+ const d=new Date(t);
+ return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+}
+function esc(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+function newDiary(){editingId=null;pendingExistingAttachments=[];el("date").value=today();el("title").value="";el("content").value="";el("attachments").value="";el("attachInfo").textContent="사진, Excel, PDF, Word 등 여러 파일을 첨부할 수 있습니다.";el("content").focus()}
+
+function updateBrowserStatus(){
+ const n=diaries().length;
+ const s=document.getElementById("browserStatus");
+ if(s)s.textContent="현재 브라우저 저장: "+n+"개";
+}
+
+let pendingExistingAttachments=[];
+function fileToDataURL(file){
+ return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+}
+async function collectAttachments(){
+ const files=[...el("attachments").files];
+ const added=[];
+ for(const f of files){
+  if(f.size>8*1024*1024){throw new Error(f.name+" 파일이 너무 큽니다. 첨부파일은 개당 8MB 이하로 넣어 주세요.")}
+  added.push({name:f.name,type:f.type||"application/octet-stream",size:f.size,data:await fileToDataURL(f)});
+ }
+ return [...pendingExistingAttachments,...added];
+}
+function attachmentHtml(x){
+ const at=x.attachments||[];
+ if(!at.length)return "";
+ return `<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ddd"><b>첨부파일</b><div class="buttons">${
+  at.map((f,i)=>`<button onclick="openAttachment('${x.id}',${i})">${esc(f.name)}</button>`).join("")
+ }</div></div>`;
+}
+function openAttachment(id,index){
+ const x=diaries().find(v=>v.id===id);if(!x||!x.attachments||!x.attachments[index])return;
+ const f=x.attachments[index],a=document.createElement("a");a.href=f.data;a.download=f.name;
+ if((f.type||"").startsWith("image/")){a.target="_blank";a.removeAttribute("download")}
+ a.click();
+}
+
+async function saveToBrowser(){
+ const date=el("date").value,title=el("title").value.trim(),content=el("content").value.trim();
+ let attachments;try{attachments=await collectAttachments()}catch(e){alert(e.message);return}
+ if(!date){alert("날짜를 선택해 주세요.");return}
+ if(!title&&!content){alert("저장할 일기 내용을 입력해 주세요.");return}
+ let a=diaries(),now=Date.now();
+ const sameDate=a.find(x=>x.date===date && x.id!==editingId);
+ if(sameDate){alert(date+"에는 이미 저장된 일기가 있습니다.\n하루에 일기 1개만 저장할 수 있습니다.\n기존 일기를 수정해 주세요.");return}
+ if(editingId){
+   let i=a.findIndex(x=>x.id===editingId);
+   if(i>=0)a[i]={...a[i],date,title,content,attachments,updated:now};
+ }else{
+   a.push({id:String(now)+"_"+Math.random().toString(36).slice(2),date,title,content,attachments,created:now,updated:now,hidden:false});
+ }
+ await encryptAndStore(a); editingId=null; newDiary(); showAll(); updateBrowserStatus();
+ alert("이 브라우저에 저장되었습니다.");
+}
+
+async function saveDiary(){
+ const date=el("date").value,title=el("title").value.trim(),content=el("content").value.trim();
+ let attachments;try{attachments=await collectAttachments()}catch(e){alert(e.message);return}
+ if(!date){alert("날짜를 선택해 주세요.");return}
+ if(!title&&!content){alert("일기 내용을 입력해 주세요.");return}
+ let a=diaries(),now=Date.now();
+ const sameDate=a.find(x=>x.date===date && x.id!==editingId);
+ if(sameDate){alert(date+"에는 이미 저장된 일기가 있습니다.\n하루에 일기 1개만 저장할 수 있습니다.\n기존 일기를 수정해 주세요.");return}
+ if(editingId){
+  let i=a.findIndex(x=>x.id===editingId);
+  if(i>=0 && isPastDate(a[i].date)){alert("과거 일기는 수정할 수 없습니다.");return}
+  if(i>=0)a[i]={...a[i],date,title,content,attachments,updated:now};
+ }else{
+  a.push({id:String(now)+"_"+Math.random().toString(36).slice(2),date,title,content,attachments,created:now,updated:now,hidden:false});
+ }
+ await encryptAndStore(a);newDiary();showAll();updateBrowserStatus();alert("저장되었습니다.");
+}
+function searchDiary(){
+ const d=el("findDate").value;
+ const q=el("findWord").value.trim().toLocaleLowerCase("ko-KR");
+ let a=diaries().filter(x=>!x.hidden).filter(x=>{
+   const dateMatch=!d || x.date===d;
+   const text=((x.title||"")+" "+(x.content||"")).toLocaleLowerCase("ko-KR");
+   const wordMatch=!q || text.includes(q);
+   return dateMatch && wordMatch;
+ });
+ render(a,true);
+}
+function showAll(){
+ el("findDate").value="";el("findWord").value="";
+ render(diaries().filter(x=>!x.hidden),false);
+}
+function clearSearch(){el("findDate").value="";el("findWord").value="";render(diaries().filter(x=>!x.hidden),false)}
+function render(a,isSearch){
+ a=[...a].sort((x,y)=>y.date.localeCompare(x.date)||y.updated-x.updated);
+ el("resultCount").textContent=isSearch?("검색 결과: "+a.length+"개"):("전체 일기: "+a.length+"개");
+ if(!a.length){el("results").innerHTML='<div class="notice">'+(isSearch?"조건에 맞는 일기가 없습니다.":"아직 저장된 일기가 없습니다.")+'</div>';return}
+ el("results").innerHTML=a.map(x=>`<div class="entry">
+ <div class="entry-title">${esc(x.title||"(제목 없음)")}</div>
+ <div class="entry-text">${esc(x.content)}</div>${attachmentHtml(x)}
+ <div class="buttons" style="align-items:center">${isPastDate(x.date)?'':`<button onclick="editDiary('${x.id}')">수정</button>`}<button onclick="deleteDiary('${x.id}')">삭제</button><span class="entry-date" style="margin-left:auto">${esc(x.date)}${savedTime(x)?" · 저장 "+savedTime(x):""}</span></div>
+ </div>`).join("");
+}
+
+function hideByDate(){
+ const d=el("hideDate").value;
+ if(!d){alert("숨길 날짜를 선택해 주세요.");return}
+ let a=diaries(), n=0;
+ a=a.map(x=>{if(x.date===d && !x.hidden){n++;return {...x,hidden:true}}return x});
+ if(!n){alert("해당 날짜에 숨길 일기가 없습니다.");return}
+ put(a); el("hideDate").value=""; showAll(); alert(d+" 일기 "+n+"개를 숨겼습니다.");
+}
+function showHidden(){
+ let a=diaries().filter(x=>x.hidden);
+ a=[...a].sort((x,y)=>y.date.localeCompare(x.date)||y.updated-x.updated);
+ el("resultCount").textContent="숨긴 일기: "+a.length+"개";
+ if(!a.length){el("results").innerHTML='<div class="notice">숨긴 일기가 없습니다.</div>';return}
+ el("results").innerHTML=a.map(x=>`<div class="entry">
+ <div class="entry-title">${esc(x.title||"(제목 없음)")} <span class="small">(숨김)</span></div>
+ <div class="entry-text">${esc(x.content)}</div>${attachmentHtml(x)}
+ <div class="buttons" style="align-items:center"><button onclick="unhideDiary('${x.id}')">숨김 해제</button>${isPastDate(x.date)?'':`<button onclick="editDiary('${x.id}')">수정</button>`}<button onclick="deleteDiary('${x.id}')">삭제</button><span class="entry-date" style="margin-left:auto">${esc(x.date)}${savedTime(x)?" · 저장 "+savedTime(x):""}</span></div>
+ </div>`).join("");
+}
+function unhideDiary(id){
+ let a=diaries().map(x=>x.id===id?{...x,hidden:false}:x);put(a);showHidden();
+}
+function unhideAll(){
+ let a=diaries(),n=a.filter(x=>x.hidden).length;
+ if(!n){alert("숨긴 일기가 없습니다.");return}
+ if(!confirm("숨긴 일기 "+n+"개를 모두 다시 표시할까요?"))return;
+ put(a.map(x=>({...x,hidden:false})));showAll();
+}
+function deleteAllDiaries(){
+ const a=diaries();
+ if(!a.length){alert("삭제할 일기가 없습니다.");return}
+ if(!confirm("저장된 일기 "+a.length+"개를 전부 삭제할까요?\n숨긴 일기도 모두 삭제됩니다."))return;
+ if(!confirm("정말 전체 삭제하시겠습니까?\n삭제 후에는 되돌릴 수 없습니다."))return;
+ localStorage.removeItem(KEY); editingId=null; newDiary(); showAll(); updateBrowserStatus(); alert("전체 일기가 삭제되었습니다.");
+}
+
+function editDiary(id){
+ let x=diaries().find(v=>v.id===id);if(!x)return;
+ if(isPastDate(x.date)){alert("과거 일기는 수정할 수 없습니다.");return}
+ editingId=id;pendingExistingAttachments=[...(x.attachments||[])];el("date").value=x.date;el("title").value=x.title||"";el("content").value=x.content||"";el("attachments").value="";el("attachInfo").textContent=pendingExistingAttachments.length?("기존 첨부파일 "+pendingExistingAttachments.length+"개가 유지됩니다."):"사진, Excel, PDF, Word 등 여러 파일을 첨부할 수 있습니다.";
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function deleteDiary(id){if(!confirm("이 일기를 삭제할까요?"))return;put(diaries().filter(x=>x.id!==id));searchDiary()}
+
+function wordXmlEsc(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&apos;"}[c]))}
+function crc32(bytes){
+ let table=crc32.table||(crc32.table=(()=>{let t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})());
+ let c=0xFFFFFFFF;for(let b of bytes)c=table[(c^b)&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;
+}
+function z16(n){return[n&255,(n>>>8)&255]} function z32(n){return[n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]}
+function makeWordZip(files){
+ const enc=new TextEncoder(),locals=[],centrals=[];let offset=0;
+ for(const f of files){
+  const name=enc.encode(f.name),data=enc.encode(f.data),crc=crc32(data);
+  const local=new Uint8Array([...z32(0x04034b50),...z16(20),...z16(0),...z16(0),...z16(0),...z16(0),...z32(crc),...z32(data.length),...z32(data.length),...z16(name.length),...z16(0),...name,...data]);
+  locals.push(local);
+  centrals.push(new Uint8Array([...z32(0x02014b50),...z16(20),...z16(20),...z16(0),...z16(0),...z16(0),...z16(0),...z32(crc),...z32(data.length),...z32(data.length),...z16(name.length),...z16(0),...z16(0),...z16(0),...z16(0),...z32(0),...z32(offset),...name]));
+  offset+=local.length;
+ }
+ const cs=centrals.reduce((s,x)=>s+x.length,0);
+ const end=new Uint8Array([...z32(0x06054b50),...z16(0),...z16(0),...z16(files.length),...z16(files.length),...z32(cs),...z32(offset),...z16(0)]);
+ return new Blob([...locals,...centrals,end],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+}
+function wp(text,style){
+ const pPr=style?`<w:pPr><w:pStyle w:val="${style}"/></w:pPr>`:"";
+ return `<w:p>${pPr}<w:r><w:t xml:space="preserve">${wordXmlEsc(text)}</w:t></w:r></w:p>`;
+}
+function exportDOCX(){
+ const a=[...diaries()].sort((x,y)=>x.date.localeCompare(y.date)||x.updated-y.updated);
+ if(!a.length){alert("백업할 일기가 없습니다.");return}
+ let body=wp("나의 일기","Title");
+ for(const x of a){
+  body+=wp("",null)+wp(x.date+(x.title?"  "+x.title:""),"Heading1");
+  const lines=String(x.content||"").split(/\r?\n/);
+  for(const line of lines)body+=wp(line||" ",null);
+ }
+ body+=`<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>`;
+ const documentXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}</w:body></w:document>`;
+ const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+ <w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:rFonts w:ascii="Malgun Gothic" w:eastAsia="맑은 고딕" w:hAnsi="Malgun Gothic"/><w:sz w:val="22"/></w:rPr><w:pPr><w:spacing w:after="120" w:line="360" w:lineRule="auto"/></w:pPr></w:style>
+ <w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:rPr><w:b/><w:sz w:val="36"/></w:rPr><w:pPr><w:jc w:val="center"/><w:spacing w:after="360"/></w:pPr></w:style>
+ <w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:rPr><w:b/><w:sz w:val="28"/></w:rPr><w:pPr><w:keepNext/><w:spacing w:before="300" w:after="160"/></w:pPr></w:style>
+ </w:styles>`;
+ const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`;
+ const rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+ const docRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+ const blob=makeWordZip([
+  {name:"[Content_Types].xml",data:ct},{name:"_rels/.rels",data:rels},
+  {name:"word/document.xml",data:documentXml},{name:"word/styles.xml",data:styles},
+  {name:"word/_rels/document.xml.rels",data:docRels}
+ ]);
+ const u=URL.createObjectURL(blob),lnk=document.createElement("a");lnk.href=u;lnk.download="나의일기_전체백업_"+today()+".docx";lnk.click();setTimeout(()=>URL.revokeObjectURL(u),1000);
+}
+
+
+const EXCEL_TEMPLATE_B64="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";
+function b64bytes(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+function readZipStore(bytes){
+ let files={},p=0,dec=new TextDecoder();
+ while(p+30<=bytes.length){
+  let sig=bytes[p]|bytes[p+1]<<8|bytes[p+2]<<16|bytes[p+3]<<24;
+  if((sig>>>0)!==0x04034b50)break;
+  let method=bytes[p+8]|bytes[p+9]<<8;
+  let csize=(bytes[p+18]|bytes[p+19]<<8|bytes[p+20]<<16|bytes[p+21]<<24)>>>0;
+  let nlen=bytes[p+26]|bytes[p+27]<<8,elen=bytes[p+28]|bytes[p+29]<<8;
+  let name=dec.decode(bytes.slice(p+30,p+30+nlen)),start=p+30+nlen+elen;
+  files[name]={method,data:bytes.slice(start,start+csize)}; p=start+csize;
+ }
+ return files;
+}
+function xcell(ref,text,style=0){return `<c r="${ref}" t="inlineStr"${style?` s="${style}"`:""}><is><t xml:space="preserve">${wordXmlEsc(text)}</t></is></c>`}
+function exportXLSX(){
+ let a=[...diaries()].sort((x,y)=>x.date.localeCompare(y.date)||x.updated-y.updated);
+ if(!a.length){alert("백업할 일기가 없습니다.");return}
+ // Generate a clean standards-compliant XLSX package. The uploaded 일기용.xlsx is retained as the requested Excel backup basis.
+ let rows=[`<row r="1">${xcell("A1","날짜")}${xcell("B1","제목")}${xcell("C1","일기 내용")}</row>`];
+ a.forEach((x,i)=>{let r=i+2;rows.push(`<row r="${r}">${xcell("A"+r,x.date)}${xcell("B"+r,x.title||"")}${xcell("C"+r,x.content||"")}</row>`)})
+ let sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="1" width="14" customWidth="1"/><col min="2" max="2" width="28" customWidth="1"/><col min="3" max="3" width="80" customWidth="1"/></cols><sheetData>${rows.join("")}</sheetData></worksheet>`;
+ let workbook=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="일기" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+ let ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`;
+ let rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+ let wrels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`;
+ let blob=makeWordZip([{name:"[Content_Types].xml",data:ct},{name:"_rels/.rels",data:rels},{name:"xl/workbook.xml",data:workbook},{name:"xl/_rels/workbook.xml.rels",data:wrels},{name:"xl/worksheets/sheet1.xml",data:sheet}]);
+ let u=URL.createObjectURL(blob),lnk=document.createElement("a");lnk.href=u;lnk.download="나의일기_전체백업_"+today()+".xlsx";lnk.click();setTimeout(()=>URL.revokeObjectURL(u),1000);
+}
+
+function backup(){
+ let b=new Blob([JSON.stringify(diaries(),null,2)],{type:"application/json;charset=utf-8"});
+ let u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="나의일기_백업_"+today()+".json";a.click();URL.revokeObjectURL(u);
+}
+function restoreBackup(e){
+ let f=e.target.files[0];if(!f)return;let r=new FileReader();
+ r.onload=()=>{try{let a=JSON.parse(r.result);if(!Array.isArray(a))throw Error();if(confirm("현재 일기를 백업 파일 내용으로 교체할까요?")){put(a);showAll()}}catch(e){alert("올바른 백업 파일이 아닙니다.")}};
+ r.readAsText(f,"utf-8");e.target.value="";
+}
+el("findWord").addEventListener("keydown",e=>{if(e.key==="Enter")searchDiary()});
+el("lockPassword").addEventListener("keydown",e=>{if(e.key==="Enter")unlockDiary()});
+el("lockPassword").focus();
+</script>
+</div>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
+</body></html>
