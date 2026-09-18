@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나의 일기</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#222;background:#f5f5f7}*{box-sizing:border-box}body{margin:0}.wrap{max-width:760px;margin:auto;padding:18px}.box,.card{background:#fff;border:1px solid #ddd;border-radius:14px;padding:16px;margin-bottom:14px}h1{font-size:24px;margin:5px 0 18px}h2{font-size:18px;margin:0 0 12px}input,textarea,button{font:inherit}input,textarea{width:100%;padding:11px;border:1px solid #ccc;border-radius:9px;margin:5px 0 10px}textarea{min-height:180px;resize:vertical}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1}button{border:0;border-radius:9px;padding:10px 13px;cursor:pointer}.primary{background:#222;color:#fff}.muted{background:#eee}.danger{background:#fee;color:#900}.meta{font-size:12px;color:#777;text-align:right;margin-top:10px}.title{font-weight:700;font-size:17px}.body{white-space:pre-wrap;margin:9px 0;line-height:1.55}.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{font-size:13px;padding:7px 10px}.hidden{display:none!important}.attach{font-size:13px;margin:5px 0}.notice{font-size:13px;color:#666}.lock{max-width:420px;margin:70px auto}.empty{text-align:center;color:#888;padding:24px}.backup button{flex:0 0 auto}
+</style>
+</head><body>
+<div id="lock" class="wrap lock"><div class="box"><h1>🔒 나의 일기</h1><p id="lockMsg" class="notice">처음이면 사용할 비밀번호를 입력하세요. 다음부터 같은 비밀번호로 엽니다.</p><input id="pw" type="password" placeholder="비밀번호"><button id="unlock" class="primary" style="width:100%">열기</button></div></div>
+<div id="app" class="wrap hidden">
+<h1>📔 나의 일기</h1>
+<div class="box">
+ <div class="row"><input id="date" type="date"><input id="title" placeholder="제목"></div>
+ <textarea id="content" placeholder="오늘의 기록"></textarea>
+ <input id="files" type="file" multiple>
+ <div id="fileInfo" class="notice"></div>
+ <button id="save" class="primary" style="width:100%;margin-top:8px">일기 저장</button>
+</div>
+<div class="box">
+ <h2>검색</h2><div class="row"><input id="q" placeholder="제목/내용 검색"><input id="searchDate" type="date"></div>
+ <div class="row"><button id="reset" class="muted">검색 초기화</button><button id="toggleHidden" class="muted">숨긴 일기 보기</button></div>
+ <div id="count" class="notice" style="margin-top:8px"></div>
+</div>
+<div class="box backup"><h2>백업</h2><div class="row"><button id="word" class="muted">Word 백업</button><button id="excel" class="muted">Excel 백업</button></div></div>
+<h2 id="listTitle">전체 일기</h2><div id="list"></div>
+</div>
+<script>
+const DB='diary_clean_v1', AUTH='diary_clean_auth_v1'; let password='', showHidden=false, editId=null, editAttachments=[];
+const $=id=>document.getElementById(id); const enc=new TextEncoder(), dec=new TextDecoder();
+const b64=u=>btoa(String.fromCharCode(...u)), unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function hash(s){return b64(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(s))))}
+async function keyFor(p,salt){return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},await crypto.subtle.importKey('raw',enc.encode(p),'PBKDF2',false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function encrypt(obj){let salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await keyFor(password,salt),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(obj)));return JSON.stringify({s:b64(salt),i:b64(iv),d:b64(new Uint8Array(ct))})}
+async function decryptData(raw){if(!raw)return[];let o=JSON.parse(raw),salt=unb64(o.s),iv=unb64(o.i),key=await keyFor(password,salt),pt=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,unb64(o.d));return JSON.parse(dec.decode(pt))}
+async function load(){return await decryptData(localStorage.getItem(DB))}
+async function store(a){localStorage.setItem(DB,await encrypt(a))}
+function today(){let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function fmt(t){let d=new Date(t);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} · 저장 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+function esc(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function unlock(){let p=$('pw').value;if(!p)return alert('비밀번호를 입력하세요.');let a=localStorage.getItem(AUTH);if(!a){localStorage.setItem(AUTH,await hash('DIARY|'+p));password=p;await store([])}else if(a!==await hash('DIARY|'+p))return alert('비밀번호가 틀렸습니다.');else password=p;try{await load()}catch(e){return alert('저장된 일기를 열 수 없습니다. 비밀번호 또는 데이터가 맞지 않습니다.')} $('lock').classList.add('hidden');$('app').classList.remove('hidden');$('date').value=today();render()}
+async function toAttachments(files){let out=[];for(const f of files){if(f.size>8*1024*1024){alert(`${f.name}: 8MB를 초과해 제외합니다.`);continue}let data=await new Promise(r=>{let x=new FileReader();x.onload=()=>r(x.result);x.readAsDataURL(f)});out.push({name:f.name,type:f.type,data})}return out}
+async function save(){let date=$('date').value, title=$('title').value.trim(), content=$('content').value.trim();if(!date||(!title&&!content))return alert('날짜와 일기 내용을 입력하세요.');let a=await load(), now=Date.now();if(editId){let i=a.findIndex(x=>x.id===editId);if(i<0)return;if(a[i].date<today())return alert('지난 날짜의 일기는 수정할 수 없습니다.');let added=await toAttachments($('files').files);a[i]={...a[i],date,title,content,updated:now,attachments:[...editAttachments,...added]}}else{if(a.some(x=>x.date===date))return alert('해당 날짜에 이미 저장된 일기가 있습니다.');a.unshift({id:crypto.randomUUID(),date,title,content,created:now,updated:now,hidden:false,attachments:await toAttachments($('files').files)})}await store(a);clearForm();await render()}
+function clearForm(){$('date').value=today();$('title').value='';$('content').value='';$('files').value='';$('fileInfo').textContent='';editId=null;editAttachments=[];$('save').textContent='일기 저장'}
+async function render(){let a=await load(),q=$('q').value.trim().toLowerCase(),sd=$('searchDate').value;a=a.filter(x=>showHidden?x.hidden:!x.hidden).filter(x=>(!q||(x.title+' '+x.content).toLowerCase().includes(q))&&(!sd||x.date===sd)).sort((x,y)=>y.date.localeCompare(x.date));$('count').textContent=`${a.length}개의 일기`;$('listTitle').textContent=showHidden?'숨긴 일기':'전체 일기';$('toggleHidden').textContent=showHidden?'전체 일기 보기':'숨긴 일기 보기';$('list').innerHTML=a.length?'':'<div class="box empty">저장된 일기가 없습니다.</div>';for(const x of a){let d=document.createElement('div');d.className='card';let at=(x.attachments||[]).map((f,i)=>`<div class="attach"><a href="${f.data}" download="${esc(f.name)}">📎 ${esc(f.name)}</a></div>`).join('');d.innerHTML=`<div class="title">${esc(x.title||'(제목 없음)')}</div><div class="body">${esc(x.content)}</div>${at}<div class="actions">${x.date>=today()?`<button data-act="edit" data-id="${x.id}" class="muted">수정</button>`:''}<button data-act="hide" data-id="${x.id}" class="muted">${x.hidden?'숨김 해제':'숨기기'}</button><button data-act="del" data-id="${x.id}" class="danger">삭제</button></div><div class="meta">${fmt(x.updated||x.created)}</div>`;$('list').appendChild(d)}}
+async function action(e){let b=e.target.closest('button[data-act]');if(!b)return;let a=await load(),x=a.find(v=>v.id===b.dataset.id);if(!x)return;if(b.dataset.act==='edit'){$('date').value=x.date;$('title').value=x.title;$('content').value=x.content;editId=x.id;editAttachments=x.attachments||[];$('fileInfo').textContent=editAttachments.length?`기존 첨부 ${editAttachments.length}개`:'';$('save').textContent='수정 저장';scrollTo({top:0,behavior:'smooth'});return}if(b.dataset.act==='hide')x.hidden=!x.hidden;if(b.dataset.act==='del'){if(!confirm('이 일기를 삭제할까요?'))return;a=a.filter(v=>v.id!==x.id)}await store(a);render()}
+function exportWord(){load().then(a=>{let html='<html><meta charset="utf-8"><body><h1>나의 일기</h1>'+a.filter(x=>!x.hidden).sort((x,y)=>x.date.localeCompare(y.date)).map(x=>`<h2>${esc(x.date)} ${esc(x.title)}</h2><p>${esc(x.content).replace(/\n/g,'<br>')}</p><p>${fmt(x.updated||x.created)}</p>`).join('')+'</body></html>';download(new Blob([html],{type:'application/msword'}),'나의_일기.doc')})}
+function exportExcel(){load().then(a=>{let rows=[['날짜','제목','내용','저장시간'],...a.filter(x=>!x.hidden).map(x=>[x.date,x.title,x.content,fmt(x.updated||x.created)])];let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'나의_일기.csv')})}
+function download(blob,name){let u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+$('unlock').onclick=unlock;$('pw').addEventListener('keydown',e=>{if(e.key==='Enter')unlock()});$('save').onclick=save;$('q').oninput=render;$('searchDate').onchange=render;$('reset').onclick=()=>{$('q').value='';$('searchDate').value='';render()};$('toggleHidden').onclick=()=>{showHidden=!showHidden;render()};$('list').onclick=action;$('files').onchange=()=>{$('fileInfo').textContent=`새 첨부 ${$('files').files.length}개`};$('word').onclick=exportWord;$('excel').onclick=exportExcel;
+</script></body></html>
