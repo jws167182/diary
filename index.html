@@ -105,6 +105,7 @@ let unlocked=false, diaryCache=[];
 const ENC_KEY=KEY+"_encrypted";
 const LEGACY_KEY=KEY;
 let SESSION_PASSWORD="";
+let SESSION_UNLOCKED=false;
 
 const AUTH_KEY="diary_auth_v2";
 async function sha256hex(s){
@@ -125,11 +126,13 @@ async function ensurePassword(password){
    const salt=randHex(16), verifier=await deriveVerifier(password,salt);
    localStorage.setItem(AUTH_KEY,JSON.stringify({salt,verifier}));
    SESSION_PASSWORD=password;
+   SESSION_UNLOCKED=true;
    return true;
  }
  const verifier=await deriveVerifier(password,auth.salt);
  if(verifier!==auth.verifier) return false;
  SESSION_PASSWORD=password;
+ SESSION_UNLOCKED=true;
  return true;
 }
 
