@@ -4,28 +4,59 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>나의 일기</title>
 
 <style>
-:root{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;color:#222;background:#f5f5f7}
+:root{
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;
+  color:#222;
+  background:#f5f5f7
+}
 *{box-sizing:border-box}
 body{margin:0}
 .wrap{max-width:760px;margin:auto;padding:18px}
-.box,.card{background:#fff;border:1px solid #ddd;border-radius:14px;padding:16px;margin-bottom:14px}
+.box,.card{
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:14px
+}
 h1{font-size:24px}
 h2{font-size:18px}
 input,textarea,button{font:inherit}
-input,textarea{width:100%;padding:11px;border:1px solid #ccc;border-radius:9px;margin:5px 0 10px}
+input,textarea{
+  width:100%;
+  padding:11px;
+  border:1px solid #ccc;
+  border-radius:9px;
+  margin:5px 0 10px
+}
 textarea{min-height:180px}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .row>*{flex:1;min-width:120px}
-button{border:0;border-radius:9px;padding:10px 13px;cursor:pointer}
+button{
+  border:0;
+  border-radius:9px;
+  padding:10px 13px;
+  cursor:pointer
+}
 .primary{background:#222;color:#fff}
 .muted{background:#eee}
 .danger{background:#fee;color:#900}
-.meta{font-size:12px;color:#777;text-align:right;margin-top:10px}
+.meta{
+  font-size:12px;
+  color:#777;
+  text-align:right;
+  margin-top:10px
+}
 .title{font-weight:700;font-size:17px}
-.body{white-space:pre-wrap;margin:9px 0;line-height:1.55}
+.body{
+  white-space:pre-wrap;
+  margin:9px 0;
+  line-height:1.55
+}
 .actions{display:flex;gap:7px;flex-wrap:wrap}
 .hidden{display:none!important}
 .notice,.attach{font-size:13px;color:#666}
@@ -40,1679 +71,1686 @@ button{border:0;border-radius:9px;padding:10px 13px;cursor:pointer}
 <body>
 
 <div id="lock" class="wrap lock">
-<div class="box">
-<h1>🔒 나의 일기</h1>
-<p class="notice">PC와 휴대폰에서 같은 비밀번호를 사용하세요.</p>
-<input id="pw" type="password" placeholder="비밀번호">
-<button id="unlock" class="primary" style="width:100%">열기</button>
-<div id="lockMsg" class="notice"></div>
+  <div class="box">
+    <h1>🔒 나의 일기</h1>
+    <p class="notice">이 일기는 이 기기에 암호화되어 저장됩니다.</p>
+
+    <input id="pw" type="password" placeholder="비밀번호">
+
+    <button id="unlock" class="primary" style="width:100%">
+      열기
+    </button>
+
+    <div id="lockMsg" class="notice"></div>
+  </div>
 </div>
-</div>
+
 
 <div id="app" class="wrap hidden">
 
-<h1>📔 나의 일기</h1>
-<div id="cloudStatus" class="status">동기화 준비 중</div>
+  <h1>📔 나의 일기</h1>
 
-<div class="box">
+  <div id="saveStatus" class="status ok">
+    이 iPhone에 저장
+  </div>
 
-<div class="row">
-<input id="date" type="date">
-<input id="title" placeholder="제목">
+
+  <div class="box">
+
+    <div class="row">
+      <input id="date" type="date">
+      <input id="title" placeholder="제목">
+    </div>
+
+    <textarea id="content" placeholder="오늘의 기록"></textarea>
+
+    <input id="files" type="file" multiple>
+
+    <div id="fileInfo" class="notice"></div>
+
+    <button id="save" class="primary" style="width:100%;margin-top:8px">
+      일기 저장
+    </button>
+
+  </div>
+
+
+  <div class="box">
+
+    <h2>검색</h2>
+
+    <div class="row">
+      <input id="q" placeholder="제목/내용 검색">
+      <input id="searchDate" type="date">
+    </div>
+
+    <div class="row">
+      <button id="reset" class="muted">검색 초기화</button>
+      <button id="toggleHidden" class="muted">숨긴 일기 보기</button>
+    </div>
+
+    <div id="count" class="notice"></div>
+
+  </div>
+
+
+  <div class="box">
+
+    <h2>백업</h2>
+
+    <div class="row">
+      <button id="word" class="muted">Word 백업</button>
+      <button id="excel" class="muted">Excel 백업</button>
+    </div>
+
+    <p class="notice">
+      휴대폰을 바꾸거나 앱 데이터를 삭제하기 전에 백업해 주세요.
+    </p>
+
+  </div>
+
+
+  <h2 id="listTitle">전체 일기</h2>
+
+  <div id="list"></div>
+
 </div>
 
-<textarea id="content" placeholder="오늘의 기록"></textarea>
-
-<input id="files" type="file" multiple>
-<div id="fileInfo" class="notice"></div>
-
-<button id="save" class="primary" style="width:100%;margin-top:8px">
-일기 저장
-</button>
-
-</div>
-
-<div class="box">
-
-<h2>검색</h2>
-
-<div class="row">
-<input id="q" placeholder="제목/내용 검색">
-<input id="searchDate" type="date">
-</div>
-
-<div class="row">
-<button id="reset" class="muted">검색 초기화</button>
-<button id="toggleHidden" class="muted">숨긴 일기 보기</button>
-<button id="syncNow" class="muted">지금 동기화</button>
-</div>
-
-<div id="count" class="notice"></div>
-
-</div>
-
-<div class="box">
-
-<h2>백업</h2>
-
-<div class="row">
-<button id="word" class="muted">Word 백업</button>
-<button id="excel" class="muted">Excel 백업</button>
-</div>
-
-</div>
-
-<h2 id="listTitle">전체 일기</h2>
-<div id="list"></div>
-
-</div>
 
 <script>
 'use strict';
 
-/* ================================
-   기본 설정
-================================ */
+/* =====================================
+   저장소 이름
 
-const SB_URL='https://ocovlzoijitowpipxphr.supabase.co';
-const SB_KEY='sb_publishable_kvOpsuEQP4TjqACKote4Uw_wbl1I4ri';
+   기존 버전과 같은 이름을 사용해서
+   기존 일기를 그대로 불러온다.
+===================================== */
 
-const AUTH='diary_v4_auth';
-const DATA='diary_v4_data';
-
-let password='';
-let showHidden=false;
-let editId=null;
-let syncing=false;
-
-const $=id=>document.getElementById(id);
-
-const enc=new TextEncoder();
-const dec=new TextDecoder();
+const AUTH = 'diary_v4_auth';
+const DATA = 'diary_v4_data';
 
 
-/* ================================
-   암호화
-================================ */
+let password = '';
+let showHidden = false;
+let editId = null;
 
-const b64=u=>{
- let s='';
- const a=new Uint8Array(u);
 
- for(let i=0;i<a.length;i+=0x8000)
-  s+=String.fromCharCode(...a.subarray(i,i+0x8000));
+const $ = id => document.getElementById(id);
 
- return btoa(s);
-};
+const enc = new TextEncoder();
+const dec = new TextDecoder();
 
-const unb64=s=>
- Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 
+/* =====================================
+   Base64
+===================================== */
+
+function b64(u){
+
+  let s = '';
+
+  const a = new Uint8Array(u);
+
+  for(let i=0;i<a.length;i+=0x8000){
+
+    s += String.fromCharCode(
+      ...a.subarray(i,i+0x8000)
+    );
+
+  }
+
+  return btoa(s);
+
+}
+
+
+function unb64(s){
+
+  return Uint8Array.from(
+    atob(s),
+    c=>c.charCodeAt(0)
+  );
+
+}
+
+
+/* =====================================
+   SHA256
+===================================== */
 
 async function sha(s){
 
- return b64(
-  await crypto.subtle.digest(
-   'SHA-256',
-   enc.encode(s)
-  )
- );
+  return b64(
+    await crypto.subtle.digest(
+      'SHA-256',
+      enc.encode(s)
+    )
+  );
 
 }
 
+
+/* =====================================
+   암호화 키 생성
+===================================== */
 
 async function keyFor(p,s){
 
- const k=await crypto.subtle.importKey(
-  'raw',
-  enc.encode(p),
-  'PBKDF2',
-  false,
-  ['deriveKey']
- );
+  const k = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(p),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
 
- return crypto.subtle.deriveKey(
-  {
-   name:'PBKDF2',
-   salt:s,
-   iterations:250000,
-   hash:'SHA-256'
-  },
-  k,
-  {
-   name:'AES-GCM',
-   length:256
-  },
-  false,
-  ['encrypt','decrypt']
- );
+
+  return crypto.subtle.deriveKey(
+    {
+      name:'PBKDF2',
+      salt:s,
+      iterations:250000,
+      hash:'SHA-256'
+    },
+    k,
+    {
+      name:'AES-GCM',
+      length:256
+    },
+    false,
+    ['encrypt','decrypt']
+  );
 
 }
 
+
+/* =====================================
+   암호화
+===================================== */
 
 async function seal(value){
 
- const s=crypto.getRandomValues(new Uint8Array(16));
- const iv=crypto.getRandomValues(new Uint8Array(12));
+  const salt =
+    crypto.getRandomValues(
+      new Uint8Array(16)
+    );
 
- const k=await keyFor(password,s);
 
- const d=await crypto.subtle.encrypt(
-  {
-   name:'AES-GCM',
-   iv
-  },
-  k,
-  enc.encode(JSON.stringify(value))
- );
+  const iv =
+    crypto.getRandomValues(
+      new Uint8Array(12)
+    );
 
- return JSON.stringify({
-  s:b64(s),
-  i:b64(iv),
-  d:b64(d)
- });
+
+  const key =
+    await keyFor(
+      password,
+      salt
+    );
+
+
+  const encrypted =
+    await crypto.subtle.encrypt(
+      {
+        name:'AES-GCM',
+        iv
+      },
+      key,
+      enc.encode(
+        JSON.stringify(value)
+      )
+    );
+
+
+  return JSON.stringify({
+    s:b64(salt),
+    i:b64(iv),
+    d:b64(encrypted)
+  });
 
 }
 
+
+/* =====================================
+   복호화
+===================================== */
 
 async function openSeal(raw){
 
- const o=JSON.parse(raw);
+  const o = JSON.parse(raw);
 
- const s=unb64(o.s);
- const iv=unb64(o.i);
+  if(
+    !o ||
+    !o.s ||
+    !o.i ||
+    !o.d
+  ){
+    throw new Error(
+      '올바르지 않은 일기 데이터입니다.'
+    );
+  }
 
- const k=await keyFor(password,s);
 
- const p=await crypto.subtle.decrypt(
-  {
-   name:'AES-GCM',
-   iv
-  },
-  k,
-  unb64(o.d)
- );
+  const salt = unb64(o.s);
+  const iv = unb64(o.i);
 
- return JSON.parse(dec.decode(p));
+
+  const key =
+    await keyFor(
+      password,
+      salt
+    );
+
+
+  const plain =
+    await crypto.subtle.decrypt(
+      {
+        name:'AES-GCM',
+        iv
+      },
+      key,
+      unb64(o.d)
+    );
+
+
+  return JSON.parse(
+    dec.decode(plain)
+  );
 
 }
 
 
-/* ================================
-   로컬 저장
-================================ */
+/* =====================================
+   로컬 일기 불러오기
+===================================== */
 
 async function loadLocal(){
 
- const raw=localStorage.getItem(DATA);
+  const raw =
+    localStorage.getItem(DATA);
 
- return raw
-  ? await openSeal(raw)
-  : [];
+
+  if(!raw){
+    return [];
+  }
+
+
+  const data =
+    await openSeal(raw);
+
+
+  return Array.isArray(data)
+    ? data
+    : [];
 
 }
 
+
+/* =====================================
+   로컬 일기 저장
+===================================== */
 
 async function saveLocal(a){
 
- localStorage.setItem(
-  DATA,
-  await seal(a)
- );
+  const encrypted =
+    await seal(a);
+
+
+  localStorage.setItem(
+    DATA,
+    encrypted
+  );
 
 }
 
 
-/* ================================
-   유틸
-================================ */
-
-function headers(extra={}){
-
- return {
-  apikey:SB_KEY,
-  Authorization:`Bearer ${SB_KEY}`,
-  ...extra
- };
-
-}
-
+/* =====================================
+   날짜
+===================================== */
 
 function today(){
 
- const d=new Date();
+  const d = new Date();
 
- return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+  return (
+    d.getFullYear()
+    + '-'
+    + String(
+        d.getMonth()+1
+      ).padStart(2,'0')
+    + '-'
+    + String(
+        d.getDate()
+      ).padStart(2,'0')
+  );
 
 }
 
+
+/* =====================================
+   저장 시간
+===================================== */
 
 function tm(t){
 
- const d=new Date(t);
+  const d = new Date(t);
 
- return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+
+  return (
+    String(
+      d.getHours()
+    ).padStart(2,'0')
+    + ':'
+    + String(
+      d.getMinutes()
+    ).padStart(2,'0')
+  );
 
 }
 
+
+/* =====================================
+   HTML 안전 처리
+===================================== */
 
 function esc(s=''){
 
- return String(s).replace(
-  /[&<>"']/g,
-  c=>({
-   '&':'&amp;',
-   '<':'&lt;',
-   '>':'&gt;',
-   '"':'&quot;',
-   "'":'&#39;'
-  }[c])
- );
+  return String(s).replace(
+    /[&<>"']/g,
+    c=>({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[c])
+  );
 
 }
 
+
+/* =====================================
+   상태 표시
+===================================== */
 
 function status(msg,ok=true){
 
- $('cloudStatus').className=
-  'status '+(ok?'ok':'err');
+  const el = $('saveStatus');
 
- $('cloudStatus').textContent=msg;
+  el.className =
+    'status ' + (ok?'ok':'err');
+
+  el.textContent = msg;
 
 }
 
 
-/* ================================
-   FETCH 재시도
-================================ */
+/* =====================================
+   파일 → Base64
 
-async function fetchRetry(url,options={},tries=3){
+   첨부파일도 서버 없이
+   암호화된 일기 데이터 안에 저장한다.
+===================================== */
 
- let lastError;
+function fileToBase64(file){
 
- for(let i=0;i<tries;i++){
+  return new Promise(
+    (resolve,reject)=>{
 
-  try{
+      const reader =
+        new FileReader();
 
-   const controller=new AbortController();
 
-   const timer=setTimeout(
-    ()=>controller.abort(),
-    10000
-   );
+      reader.onload = ()=>{
 
-   const r=await fetch(
-    url,
-    {
-     ...options,
-     signal:controller.signal,
-     cache:'no-store'
+        try{
+
+          const result =
+            String(reader.result || '');
+
+
+          const pos =
+            result.indexOf(',');
+
+
+          resolve({
+            id:crypto.randomUUID(),
+            name:file.name,
+            type:
+              file.type ||
+              'application/octet-stream',
+            size:file.size,
+            data:
+              pos>=0
+              ? result.slice(pos+1)
+              : ''
+          });
+
+        }
+        catch(e){
+
+          reject(e);
+
+        }
+
+      };
+
+
+      reader.onerror = ()=>{
+
+        reject(
+          new Error(
+            '파일을 읽지 못했습니다.'
+          )
+        );
+
+      };
+
+
+      reader.readAsDataURL(file);
+
     }
-   );
-
-   clearTimeout(timer);
-
-   return r;
-
-  }
-  catch(e){
-
-   lastError=e;
-
-   if(i<tries-1){
-
-    await new Promise(
-     resolve=>setTimeout(resolve,1200*(i+1))
-    );
-
-   }
-
-  }
-
- }
-
- throw lastError;
-
-}
-
-
-/* ================================
-   SUPABASE
-================================ */
-
-async function cloudRows(){
-
- const r=await fetchRetry(
-  `${SB_URL}/rest/v1/diaries?select=id,encrypted_data,updated_at`,
-  {
-   headers:headers()
-  }
- );
-
- if(!r.ok)
-  throw Error(`DB 읽기 실패 (${r.status})`);
-
- return r.json();
-
-}
-
-
-async function cloudUpsert(d){
-
- const encrypted_data=await seal(d);
-
- const r=await fetchRetry(
-  `${SB_URL}/rest/v1/diaries?on_conflict=id`,
-  {
-   method:'POST',
-
-   headers:headers({
-    'Content-Type':'application/json',
-    Prefer:'resolution=merge-duplicates,return=minimal'
-   }),
-
-   body:JSON.stringify({
-    id:d.id,
-    encrypted_data,
-    updated_at:new Date(
-     d.updated||Date.now()
-    ).toISOString()
-   })
-  }
- );
-
- if(!r.ok)
-  throw Error(
-   `DB 저장 실패 (${r.status}) ${await r.text()}`
   );
 
 }
 
 
-async function cloudDelete(id){
-
- const r=await fetchRetry(
-  `${SB_URL}/rest/v1/diaries?id=eq.${encodeURIComponent(id)}`,
-  {
-   method:'DELETE',
-   headers:headers()
-  }
- );
-
- if(!r.ok)
-  throw Error(`DB 삭제 실패 (${r.status})`);
-
-}
-
-
-/* ================================
-   첨부파일
-================================ */
-
-async function uploadAttachment(diaryId,file){
-
- const aid=crypto.randomUUID();
-
- const path=`${diaryId}/${aid}`;
-
- const bytes=
-  new Uint8Array(
-   await file.arrayBuffer()
-  );
-
- const payload=await seal({
-  name:file.name,
-  type:file.type||'application/octet-stream',
-  size:file.size,
-  data:b64(bytes)
- });
-
- const r=await fetchRetry(
-  `${SB_URL}/storage/v1/object/diary-files/${path}`,
-  {
-   method:'POST',
-
-   headers:headers({
-    'Content-Type':'application/json',
-    'x-upsert':'true'
-   }),
-
-   body:payload
-  }
- );
-
- if(!r.ok)
-  throw Error(
-   `첨부 저장 실패 (${r.status})`
-  );
-
- return {
-  id:aid,
-  path,
-  name:file.name,
-  size:file.size
- };
-
-}
-
-
-async function getAttachment(a){
-
- const r=await fetchRetry(
-  `${SB_URL}/storage/v1/object/diary-files/${a.path}`,
-  {
-   headers:headers()
-  }
- );
-
- if(!r.ok)
-  throw Error(`첨부 읽기 실패 (${r.status})`);
-
- return openSeal(
-  await r.text()
- );
-
-}
-
-
-async function removeAttachments(d){
-
- for(const a of d.attachments||[]){
-
-  try{
-
-   await fetchRetry(
-    `${SB_URL}/storage/v1/object/diary-files/${a.path}`,
-    {
-     method:'DELETE',
-     headers:headers()
-    },
-    2
-   );
-
-  }
-  catch(e){
-
-   console.warn(
-    '첨부 삭제 실패',
-    e
-   );
-
-  }
-
- }
-
-}
-
-
-/* ================================
-   동기화
-================================ */
-
-async function syncAll(){
-
- if(syncing)return;
-
- syncing=true;
-
- status('동기화 중…');
-
- try{
-
-  let local=await loadLocal();
-
-  const rows=await cloudRows();
-
-  const remote=[];
-
-  let decryptFail=0;
-
-  for(const row of rows){
-
-   try{
-
-    const d=
-     await openSeal(
-      row.encrypted_data
-     );
-
-    if(d&&d.id)
-     remote.push(d);
-
-   }
-   catch(e){
-
-    decryptFail++;
-
-    console.error(
-     '클라우드 복호화 실패',
-     row.id,
-     e
-    );
-
-   }
-
-  }
-
-
-  const byId=new Map();
-
-
-  for(const d of local){
-
-   byId.set(d.id,d);
-
-  }
-
-
-  for(const d of remote){
-
-   const old=byId.get(d.id);
-
-   if(
-    !old ||
-    (d.updated||0) >
-    (old.updated||0)
-   ){
-
-    byId.set(d.id,d);
-
-   }
-
-  }
-
-
-  let merged=
-   [...byId.values()];
-
-
-  /*
-   같은 날짜가 두 기기에서 만들어진 경우
-   가장 최근 데이터 유지
-  */
-
-  const byDate=new Map();
-
-  for(const d of merged){
-
-   const old=
-    byDate.get(d.date);
-
-   if(
-    !old ||
-    (d.updated||0)>
-    (old.updated||0)
-   ){
-
-    byDate.set(
-     d.date,
-     d
-    );
-
-   }
-
-  }
-
-  merged=
-   [...byDate.values()];
-
-
-  await saveLocal(merged);
-
-
-  /*
-   로컬 최신 데이터를
-   서버에 다시 맞춤
-  */
-
-  const remoteMap=
-   new Map(
-    remote.map(
-     d=>[d.id,d]
-    )
-   );
-
-
-  for(const d of merged){
-
-   const r=
-    remoteMap.get(d.id);
-
-   if(
-    !r ||
-    (d.updated||0)>
-    (r.updated||0)
-   ){
-
-    await cloudUpsert(d);
-
-   }
-
-  }
-
-
-  await render();
-
-
-  if(decryptFail){
-
-   status(
-    `✓ 동기화 완료 · 복호화 실패 ${decryptFail}개`,
-    false
-   );
-
-  }
-  else{
-
-   status(
-    '✓ PC ↔ 휴대폰 동기화 완료'
-   );
-
-  }
-
- }
- catch(e){
-
-  console.error(
-   '동기화 오류',
-   e
-  );
-
-
-  /*
-   서버가 죽어도
-   로컬 일기는 계속 사용 가능
-  */
-
-  if(
-   e.name==='AbortError' ||
-   /fetch|load failed|network/i.test(
-    e.message||''
-   )
-  ){
-
-   status(
-    '클라우드 연결 실패 · 이 기기에 안전하게 저장됩니다',
-    false
-   );
-
-  }
-  else{
-
-   status(
-    '동기화 실패: '+
-    (e.message||e),
-    false
-   );
-
-  }
-
- }
- finally{
-
-  syncing=false;
-
- }
-
-}
-
-
-/* ================================
+/* =====================================
    잠금 해제
-================================ */
+===================================== */
 
 async function unlock(){
 
- try{
+  $('lockMsg').textContent = '';
 
-  const p=$('pw').value;
-
-  if(!p)
-   return alert(
-    '비밀번호를 입력하세요.'
-   );
-
-
-  const h=
-   await sha(
-    'DIARY-V4|'+p
-   );
-
-
-  const saved=
-   localStorage.getItem(AUTH);
-
-
-  if(
-   saved &&
-   saved!==h
-  )
-   return alert(
-    '이 기기에 설정된 비밀번호와 다릅니다.'
-   );
-
-
-  password=p;
-
-
-  if(!saved)
-   localStorage.setItem(
-    AUTH,
-    h
-   );
-
-
-  if(!localStorage.getItem(DATA))
-   await saveLocal([]);
-
-
-  await loadLocal();
-
-
-  $('lock').classList.add(
-   'hidden'
-  );
-
-  $('app').classList.remove(
-   'hidden'
-  );
-
-
-  $('date').value=today();
-
-
-  await render();
-
-
-  /*
-   앱은 먼저 열고
-   동기화는 별도로 실행
-  */
-
-  syncAll();
-
- }
- catch(e){
-
-  console.error(e);
-
-  $('lockMsg').textContent=
-   '일기 데이터를 열 수 없습니다.';
-
- }
-
-}
-
-
-/* ================================
-   일기 저장
-================================ */
-
-async function save(){
-
- try{
-
-  const date=$('date').value;
-
-  const title=
-   $('title').value.trim();
-
-  const content=
-   $('content').value.trim();
-
-
-  if(
-   !date ||
-   (!title&&!content)
-  )
-   return alert(
-    '날짜와 일기 내용을 입력하세요.'
-   );
-
-
-  let a=await loadLocal();
-
-  const now=Date.now();
-
-  let d;
-
-
-  if(editId){
-
-   const i=
-    a.findIndex(
-     x=>x.id===editId
-    );
-
-
-   if(i<0)
-    return alert(
-     '수정할 일기를 찾지 못했습니다.'
-    );
-
-
-   if(
-    a[i].date!==today()
-   )
-    return alert(
-     '지난 날짜의 일기는 수정할 수 없습니다.'
-    );
-
-
-   d={
-    ...a[i],
-    title,
-    content,
-    updated:now
-   };
-
-
-   /*
-    첨부파일은 서버 연결이 있을 때 추가
-   */
-
-   const added=[];
-
-   for(
-    const f of
-    Array.from(
-     $('files').files||[]
-    )
-   ){
-
-    try{
-
-     added.push(
-      await uploadAttachment(
-       d.id,
-       f
-      )
-     );
-
-    }
-    catch(e){
-
-     console.error(e);
-
-     alert(
-      `첨부파일 "${f.name}"은 클라우드 연결 실패로 저장하지 못했습니다. 일기 본문은 저장합니다.`
-     );
-
-    }
-
-   }
-
-
-   d.attachments=[
-    ...(d.attachments||[]),
-    ...added
-   ];
-
-
-   a[i]=d;
-
-  }
-  else{
-
-   if(
-    a.some(
-     x=>x.date===date
-    )
-   )
-    return alert(
-     '해당 날짜에 이미 저장된 일기가 있습니다.'
-    );
-
-
-   d={
-    id:crypto.randomUUID(),
-    date,
-    title,
-    content,
-    created:now,
-    updated:now,
-    hidden:false,
-    attachments:[]
-   };
-
-
-   /*
-    새 일기는 먼저 로컬에 생성
-   */
-
-   for(
-    const f of
-    Array.from(
-     $('files').files||[]
-    )
-   ){
-
-    try{
-
-     d.attachments.push(
-      await uploadAttachment(
-       d.id,
-       f
-      )
-     );
-
-    }
-    catch(e){
-
-     console.error(e);
-
-     alert(
-      `첨부파일 "${f.name}"은 클라우드 연결 실패로 저장하지 못했습니다.`
-     );
-
-    }
-
-   }
-
-
-   a.unshift(d);
-
-  }
-
-
-  /*
-   가장 중요:
-   서버 상태와 관계없이
-   로컬 저장 먼저
-  */
-
-  await saveLocal(a);
-
-
-  clearForm();
-
-  await render();
-
-
-  /*
-   클라우드 저장 시도
-  */
 
   try{
 
-   await cloudUpsert(d);
+    const p =
+      $('pw').value;
 
-   status(
-    '✓ 저장 및 동기화 완료'
-   );
+
+    if(!p){
+
+      alert(
+        '비밀번호를 입력하세요.'
+      );
+
+      return;
+
+    }
+
+
+    const h =
+      await sha(
+        'DIARY-V4|' + p
+      );
+
+
+    const saved =
+      localStorage.getItem(AUTH);
+
+
+    /*
+      이 기기에 이미 비밀번호가
+      설정되어 있는 경우
+    */
+
+    if(
+      saved &&
+      saved !== h
+    ){
+
+      alert(
+        '비밀번호가 다릅니다.'
+      );
+
+      return;
+
+    }
+
+
+    password = p;
+
+
+    /*
+      기존 일기가 있으면 먼저
+      실제 복호화가 되는지 확인한다.
+    */
+
+    if(
+      localStorage.getItem(DATA)
+    ){
+
+      await loadLocal();
+
+    }
+    else{
+
+      /*
+        완전히 처음 사용하는 경우
+      */
+
+      await saveLocal([]);
+
+    }
+
+
+    /*
+      데이터 확인이 끝난 뒤에만
+      비밀번호 정보를 저장한다.
+    */
+
+    if(!saved){
+
+      localStorage.setItem(
+        AUTH,
+        h
+      );
+
+    }
+
+
+    $('lock').classList.add(
+      'hidden'
+    );
+
+
+    $('app').classList.remove(
+      'hidden'
+    );
+
+
+    $('date').value =
+      today();
+
+
+    await render();
+
+
+    status(
+      '✓ 이 iPhone에 안전하게 저장됩니다'
+    );
 
   }
   catch(e){
 
-   console.error(e);
+    console.error(e);
 
-   status(
-    '✓ 이 기기에 저장됨 · 클라우드 연결 후 동기화하세요',
-    false
-   );
+
+    password = '';
+
+
+    $('lockMsg').textContent =
+      '비밀번호가 다르거나 기존 일기 데이터를 열 수 없습니다.';
 
   }
-
- }
- catch(e){
-
-  console.error(e);
-
-  alert(
-   '저장 실패: '+
-   (e.message||e)
-  );
-
- }
 
 }
 
 
-/* ================================
-   입력 초기화
-================================ */
+/* =====================================
+   일기 저장
+===================================== */
+
+async function save(){
+
+  try{
+
+    const date =
+      $('date').value;
+
+
+    const title =
+      $('title').value.trim();
+
+
+    const content =
+      $('content').value.trim();
+
+
+    if(
+      !date ||
+      (!title && !content)
+    ){
+
+      alert(
+        '날짜와 일기 내용을 입력하세요.'
+      );
+
+      return;
+
+    }
+
+
+    let diaries =
+      await loadLocal();
+
+
+    const now =
+      Date.now();
+
+
+    let diary;
+
+
+    /* =================================
+       기존 일기 수정
+    ================================= */
+
+    if(editId){
+
+      const i =
+        diaries.findIndex(
+          x=>x.id===editId
+        );
+
+
+      if(i<0){
+
+        alert(
+          '수정할 일기를 찾지 못했습니다.'
+        );
+
+        return;
+
+      }
+
+
+      /*
+        기존 규칙 유지:
+        오늘 작성한 일기만 수정 가능
+      */
+
+      if(
+        diaries[i].date !== today()
+      ){
+
+        alert(
+          '지난 날짜의 일기는 수정할 수 없습니다.'
+        );
+
+        return;
+
+      }
+
+
+      diary = {
+        ...diaries[i],
+        title,
+        content,
+        updated:now
+      };
+
+
+      const files =
+        Array.from(
+          $('files').files || []
+        );
+
+
+      if(files.length){
+
+        status(
+          '첨부파일 저장 중…'
+        );
+
+      }
+
+
+      const added = [];
+
+
+      for(const file of files){
+
+        try{
+
+          added.push(
+            await fileToBase64(file)
+          );
+
+        }
+        catch(e){
+
+          console.error(e);
+
+          alert(
+            `"${file.name}" 파일을 저장하지 못했습니다.`
+          );
+
+        }
+
+      }
+
+
+      diary.attachments = [
+        ...(diary.attachments || []),
+        ...added
+      ];
+
+
+      diaries[i] = diary;
+
+    }
+
+    /* =================================
+       새 일기
+    ================================= */
+
+    else{
+
+      /*
+        같은 날짜에는
+        하나의 일기만 저장
+      */
+
+      if(
+        diaries.some(
+          x=>x.date===date
+        )
+      ){
+
+        alert(
+          '해당 날짜에 이미 저장된 일기가 있습니다.'
+        );
+
+        return;
+
+      }
+
+
+      diary = {
+        id:crypto.randomUUID(),
+        date,
+        title,
+        content,
+        created:now,
+        updated:now,
+        hidden:false,
+        attachments:[]
+      };
+
+
+      const files =
+        Array.from(
+          $('files').files || []
+        );
+
+
+      if(files.length){
+
+        status(
+          '첨부파일 저장 중…'
+        );
+
+      }
+
+
+      for(const file of files){
+
+        try{
+
+          diary.attachments.push(
+            await fileToBase64(file)
+          );
+
+        }
+        catch(e){
+
+          console.error(e);
+
+          alert(
+            `"${file.name}" 파일을 저장하지 못했습니다.`
+          );
+
+        }
+
+      }
+
+
+      diaries.unshift(diary);
+
+    }
+
+
+    /*
+      서버 호출 없음.
+      이 기기의 localStorage에만 저장.
+    */
+
+    await saveLocal(diaries);
+
+
+    clearForm();
+
+
+    await render();
+
+
+    status(
+      '✓ 저장 완료'
+    );
+
+  }
+  catch(e){
+
+    console.error(e);
+
+
+    if(
+      e &&
+      (
+        e.name==='QuotaExceededError' ||
+        /quota/i.test(
+          e.message || ''
+        )
+      )
+    ){
+
+      alert(
+        '휴대폰 저장공간 한도를 초과했습니다. 큰 첨부파일을 줄이거나 백업해 주세요.'
+      );
+
+    }
+    else{
+
+      alert(
+        '일기를 저장하지 못했습니다.'
+      );
+
+    }
+
+
+    status(
+      '저장 실패',
+      false
+    );
+
+  }
+
+}
+
+
+/* =====================================
+   입력창 초기화
+===================================== */
 
 function clearForm(){
 
- $('date').value=today();
+  $('date').value =
+    today();
 
- $('title').value='';
+  $('title').value = '';
 
- $('content').value='';
+  $('content').value = '';
 
- $('files').value='';
+  $('files').value = '';
 
- $('fileInfo').textContent='';
+  $('fileInfo').textContent = '';
 
- editId=null;
+  editId = null;
 
- $('save').textContent=
-  '일기 저장';
+  $('save').textContent =
+    '일기 저장';
 
 }
 
 
-/* ================================
-   첨부 다운로드
-================================ */
+/* =====================================
+   첨부파일 다운로드
+===================================== */
 
 async function downloadAttachment(id){
 
- try{
+  try{
 
-  const all=
-   await loadLocal();
-
-
-  const a=
-   all
-   .flatMap(
-    d=>d.attachments||[]
-   )
-   .find(
-    x=>x.id===id
-   );
+    const diaries =
+      await loadLocal();
 
 
-  if(!a)
-   return alert(
-    '첨부파일 정보를 찾을 수 없습니다.'
-   );
+    let attachment = null;
 
 
-  const o=
-   await getAttachment(a);
+    for(const diary of diaries){
+
+      attachment =
+        (diary.attachments || [])
+        .find(
+          a=>a.id===id
+        );
 
 
-  const blob=
-   new Blob(
-    [unb64(o.data)],
-    {type:o.type}
-   );
+      if(attachment){
+        break;
+      }
+
+    }
 
 
-  const u=
-   URL.createObjectURL(blob);
+    if(!attachment){
+
+      alert(
+        '첨부파일을 찾을 수 없습니다.'
+      );
+
+      return;
+
+    }
 
 
-  const el=
-   document.createElement('a');
+    /*
+      새 로컬 방식의 첨부파일
+    */
+
+    if(attachment.data){
+
+      const bytes =
+        unb64(
+          attachment.data
+        );
 
 
-  el.href=u;
+      const blob =
+        new Blob(
+          [bytes],
+          {
+            type:
+              attachment.type ||
+              'application/octet-stream'
+          }
+        );
 
-  el.download=o.name;
+
+      const url =
+        URL.createObjectURL(blob);
 
 
-  document.body.appendChild(el);
-
-  el.click();
-
-  el.remove();
+      const a =
+        document.createElement('a');
 
 
-  setTimeout(
-   ()=>URL.revokeObjectURL(u),
-   1500
-  );
+      a.href = url;
 
- }
- catch(e){
+      a.download =
+        attachment.name ||
+        '첨부파일';
 
-  console.error(e);
 
-  alert(
-   '첨부파일을 열 수 없습니다: '+
-   (e.message||e)
-  );
+      document.body.appendChild(a);
 
- }
+      a.click();
+
+      a.remove();
+
+
+      setTimeout(
+        ()=>URL.revokeObjectURL(url),
+        1500
+      );
+
+
+      return;
+
+    }
+
+
+    /*
+      예전 Supabase 첨부파일은
+      서버가 없으므로 자동 다운로드 불가.
+      앱 자체 오류는 발생시키지 않는다.
+    */
+
+    alert(
+      '이 파일은 이전 클라우드 버전에서 저장된 첨부파일입니다.'
+    );
+
+  }
+  catch(e){
+
+    console.error(e);
+
+    alert(
+      '첨부파일을 열지 못했습니다.'
+    );
+
+  }
 
 }
 
 
-/* ================================
+/* =====================================
    화면 출력
-================================ */
+===================================== */
 
 async function render(){
 
- let a=
-  await loadLocal();
+  let diaries =
+    await loadLocal();
 
 
- const q=
-  $('q').value
-  .trim()
-  .toLowerCase();
+  const q =
+    $('q')
+    .value
+    .trim()
+    .toLowerCase();
 
 
- const sd=
-  $('searchDate').value;
+  const searchDate =
+    $('searchDate').value;
 
 
- a=a
+  diaries =
+    diaries
 
- .filter(
-  x=>
-   showHidden
-   ?x.hidden
-   :!x.hidden
- )
-
- .filter(
-  x=>
-   (
-    !q ||
-    (
-     (x.title||'')+
-     ' '+
-     (x.content||'')
+    .filter(
+      x=>
+        showHidden
+        ? x.hidden
+        : !x.hidden
     )
-    .toLowerCase()
-    .includes(q)
-   )
-   &&
-   (
-    !sd ||
-    x.date===sd
-   )
- )
 
- .sort(
-  (x,y)=>
-   y.date.localeCompare(
-    x.date
-   )
- );
+    .filter(
+      x=>{
+
+        const text =
+          (
+            (x.title || '') +
+            ' ' +
+            (x.content || '')
+          )
+          .toLowerCase();
 
 
- $('count').textContent=
-  `${a.length}개의 일기`;
+        return (
+          (!q || text.includes(q))
+          &&
+          (
+            !searchDate ||
+            x.date===searchDate
+          )
+        );
+
+      }
+    )
+
+    .sort(
+      (a,b)=>
+        b.date.localeCompare(
+          a.date
+        )
+    );
 
 
- $('listTitle').textContent=
-  showHidden
-  ?'숨긴 일기'
-  :'전체 일기';
+  $('count').textContent =
+    `${diaries.length}개의 일기`;
 
 
- $('toggleHidden').textContent=
-  showHidden
-  ?'전체 일기 보기'
-  :'숨긴 일기 보기';
+  $('listTitle').textContent =
+    showHidden
+    ? '숨긴 일기'
+    : '전체 일기';
 
 
- $('list').innerHTML=
-  a.length
-  ?''
-  :'<div class="box empty">저장된 일기가 없습니다.</div>';
+  $('toggleHidden').textContent =
+    showHidden
+    ? '전체 일기 보기'
+    : '숨긴 일기 보기';
 
 
- for(const x of a){
-
-  const d=
-   document.createElement(
-    'div'
-   );
+  $('list').innerHTML =
+    diaries.length
+    ? ''
+    : '<div class="box empty">저장된 일기가 없습니다.</div>';
 
 
-  d.className='card';
+  for(const x of diaries){
+
+    const d =
+      document.createElement(
+        'div'
+      );
 
 
-  const ats=
-   (x.attachments||[])
-   .map(
-    f=>
-     `<div class="attach"><button class="muted" data-file="${f.id}">📎 ${esc(f.name)}</button></div>`
-   )
-   .join('');
+    d.className =
+      'card';
 
 
-  d.innerHTML=`
-<div class="title">${esc(x.title||'(제목 없음)')}</div>
-
-<div class="body">${esc(x.content)}</div>
-
-${ats}
-
-<div class="actions">
-
-${x.date===today()
-?`<button data-act="edit" data-id="${x.id}" class="muted">수정</button>`
-:''}
-
-<button data-act="hide" data-id="${x.id}" class="muted">
-${x.hidden?'숨김 해제':'숨기기'}
-</button>
-
-<button data-act="del" data-id="${x.id}" class="danger">
-삭제
-</button>
-
-</div>
-
-<div class="meta">
-${x.date} · 저장 ${tm(x.updated||x.created)}
-</div>
-`;
+    const attachments =
+      (x.attachments || [])
+      .map(
+        f=>
+          `<div class="attach">
+            <button class="muted" data-file="${esc(f.id)}">
+              📎 ${esc(f.name || '첨부파일')}
+            </button>
+          </div>`
+      )
+      .join('');
 
 
-  $('list').appendChild(d);
+    d.innerHTML = `
 
- }
+      <div class="title">
+        ${esc(x.title || '(제목 없음)')}
+      </div>
+
+      <div class="body">
+        ${esc(x.content || '')}
+      </div>
+
+      ${attachments}
+
+      <div class="actions">
+
+        ${
+          x.date===today()
+          ?
+          `<button
+             data-act="edit"
+             data-id="${esc(x.id)}"
+             class="muted">
+             수정
+           </button>`
+          :
+          ''
+        }
+
+        <button
+          data-act="hide"
+          data-id="${esc(x.id)}"
+          class="muted">
+
+          ${
+            x.hidden
+            ? '숨김 해제'
+            : '숨기기'
+          }
+
+        </button>
+
+        <button
+          data-act="del"
+          data-id="${esc(x.id)}"
+          class="danger">
+          삭제
+        </button>
+
+      </div>
+
+      <div class="meta">
+        ${esc(x.date)} · 저장 ${tm(x.updated || x.created)}
+      </div>
+
+    `;
+
+
+    $('list').appendChild(d);
+
+  }
 
 }
 
 
-/* ================================
-   수정/숨김/삭제
-================================ */
+/* =====================================
+   수정 / 숨김 / 삭제
+===================================== */
 
 async function action(e){
 
- const fb=
-  e.target.closest(
-   'button[data-file]'
-  );
+  const fileButton =
+    e.target.closest(
+      'button[data-file]'
+    );
 
 
- if(fb)
-  return downloadAttachment(
-   fb.dataset.file
-  );
+  if(fileButton){
+
+    await downloadAttachment(
+      fileButton.dataset.file
+    );
+
+    return;
+
+  }
 
 
- const b=
-  e.target.closest(
-   'button[data-act]'
-  );
+  const button =
+    e.target.closest(
+      'button[data-act]'
+    );
 
 
- if(!b)return;
-
-
- let a=
-  await loadLocal();
-
-
- const i=
-  a.findIndex(
-   v=>v.id===b.dataset.id
-  );
-
-
- if(i<0)return;
-
-
- let x=a[i];
-
-
- if(
-  b.dataset.act==='edit'
- ){
-
-  $('date').value=x.date;
-
-  $('title').value=x.title;
-
-  $('content').value=x.content;
-
-  editId=x.id;
-
-
-  $('fileInfo').textContent=
-   (x.attachments||[]).length
-   ?`기존 첨부 ${(x.attachments||[]).length}개 · 새 파일 추가 가능`
-   :'';
-
-
-  $('save').textContent=
-   '수정 저장';
-
-
-  scrollTo({
-   top:0,
-   behavior:'smooth'
-  });
-
-
-  return;
-
- }
-
-
- if(
-  b.dataset.act==='hide'
- ){
-
-  x={
-   ...x,
-   hidden:!x.hidden,
-   updated:Date.now()
-  };
-
-
-  a[i]=x;
-
-
-  await saveLocal(a);
-
-  await render();
+  if(!button){
+    return;
+  }
 
 
   try{
 
-   await cloudUpsert(x);
+    let diaries =
+      await loadLocal();
 
-   status(
-    '✓ 동기화 완료'
-   );
+
+    const i =
+      diaries.findIndex(
+        x=>x.id===button.dataset.id
+      );
+
+
+    if(i<0){
+      return;
+    }
+
+
+    let diary =
+      diaries[i];
+
+
+    /* 수정 */
+
+    if(
+      button.dataset.act==='edit'
+    ){
+
+      $('date').value =
+        diary.date;
+
+      $('title').value =
+        diary.title || '';
+
+      $('content').value =
+        diary.content || '';
+
+      editId =
+        diary.id;
+
+
+      $('fileInfo').textContent =
+        (diary.attachments || []).length
+        ?
+        `기존 첨부 ${(diary.attachments || []).length}개 · 새 파일 추가 가능`
+        :
+        '';
+
+
+      $('save').textContent =
+        '수정 저장';
+
+
+      window.scrollTo({
+        top:0,
+        behavior:'smooth'
+      });
+
+
+      return;
+
+    }
+
+
+    /* 숨김 */
+
+    if(
+      button.dataset.act==='hide'
+    ){
+
+      diary = {
+        ...diary,
+        hidden:!diary.hidden,
+        updated:Date.now()
+      };
+
+
+      diaries[i] =
+        diary;
+
+
+      await saveLocal(diaries);
+
+      await render();
+
+
+      status(
+        '✓ 변경사항 저장 완료'
+      );
+
+
+      return;
+
+    }
+
+
+    /* 삭제 */
+
+    if(
+      button.dataset.act==='del'
+    ){
+
+      if(
+        !confirm(
+          '이 일기를 삭제할까요?'
+        )
+      ){
+        return;
+      }
+
+
+      diaries.splice(
+        i,
+        1
+      );
+
+
+      await saveLocal(diaries);
+
+
+      if(editId===diary.id){
+
+        clearForm();
+
+      }
+
+
+      await render();
+
+
+      status(
+        '✓ 삭제 완료'
+      );
+
+    }
 
   }
-  catch(err){
+  catch(e){
 
-   console.error(err);
+    console.error(e);
 
-   status(
-    '✓ 이 기기에서 변경됨 · 클라우드 연결 후 동기화하세요',
-    false
-   );
-
-  }
-
- }
-
-
- if(
-  b.dataset.act==='del'
- ){
-
-  if(
-   !confirm(
-    '이 일기를 삭제할까요?'
-   )
-  )
-   return;
-
-
-  /*
-   서버보다 로컬 삭제 우선
-  */
-
-  a.splice(i,1);
-
-  await saveLocal(a);
-
-  await render();
-
-
-  try{
-
-   await cloudDelete(x.id);
-
-   await removeAttachments(x);
-
-   status(
-    '✓ 삭제 및 동기화 완료'
-   );
+    alert(
+      '처리 중 오류가 발생했습니다.'
+    );
 
   }
-  catch(err){
-
-   console.error(err);
-
-   status(
-    '이 기기에서 삭제됨 · 클라우드 연결 실패',
-    false
-   );
-
-  }
-
- }
 
 }
 
 
-/* ================================
-   백업
-================================ */
+/* =====================================
+   다운로드 공통
+===================================== */
 
 function dl(blob,name){
 
- const u=
-  URL.createObjectURL(blob);
+  const url =
+    URL.createObjectURL(blob);
 
- const a=
-  document.createElement('a');
 
- a.href=u;
+  const a =
+    document.createElement('a');
 
- a.download=name;
 
- document.body.appendChild(a);
+  a.href =
+    url;
 
- a.click();
 
- a.remove();
+  a.download =
+    name;
 
- setTimeout(
-  ()=>URL.revokeObjectURL(u),
-  1500
- );
+
+  document.body.appendChild(a);
+
+  a.click();
+
+  a.remove();
+
+
+  setTimeout(
+    ()=>URL.revokeObjectURL(url),
+    1500
+  );
 
 }
 
+
+/* =====================================
+   Word 백업
+===================================== */
 
 async function word(){
 
- const a=
-  await loadLocal();
+  try{
+
+    const diaries =
+      await loadLocal();
 
 
- const h=
-  '<html><meta charset="utf-8"><body><h1>나의 일기</h1>'+
-  a
-  .filter(x=>!x.hidden)
-  .sort(
-   (x,y)=>
-    x.date.localeCompare(
-     y.date
-    )
-  )
-  .map(
-   x=>
-    `<h2>${esc(x.date)} ${esc(x.title)}</h2><p>${esc(x.content).replace(/\n/g,'<br>')}</p><p>${x.date} · 저장 ${tm(x.updated||x.created)}</p>`
-  )
-  .join('')+
-  '</body></html>';
+    const html =
+      '<html><meta charset="utf-8"><body>' +
+      '<h1>나의 일기</h1>' +
+
+      diaries
+
+      .filter(
+        x=>!x.hidden
+      )
+
+      .sort(
+        (a,b)=>
+          a.date.localeCompare(
+            b.date
+          )
+      )
+
+      .map(
+        x=>
+          `<h2>${esc(x.date)} ${esc(x.title || '')}</h2>
+           <p>${esc(x.content || '').replace(/\n/g,'<br>')}</p>
+           <p>${esc(x.date)} · 저장 ${tm(x.updated || x.created)}</p>`
+      )
+
+      .join('') +
+
+      '</body></html>';
 
 
- dl(
-  new Blob(
-   [h],
-   {type:'application/msword'}
-  ),
-  '나의_일기.doc'
- );
+    dl(
+      new Blob(
+        [html],
+        {
+          type:'application/msword'
+        }
+      ),
+      '나의_일기.doc'
+    );
+
+  }
+  catch(e){
+
+    console.error(e);
+
+    alert(
+      'Word 백업을 만들지 못했습니다.'
+    );
+
+  }
 
 }
 
+
+/* =====================================
+   Excel(CSV) 백업
+===================================== */
 
 async function excel(){
 
- const a=
-  await loadLocal();
+  try{
+
+    const diaries =
+      await loadLocal();
 
 
- const r=[
-  [
-   '날짜',
-   '제목',
-   '내용',
-   '저장시간'
-  ],
-  ...a
-  .filter(x=>!x.hidden)
-  .map(
-   x=>[
-    x.date,
-    x.title,
-    x.content,
-    tm(x.updated||x.created)
-   ]
-  )
- ];
+    const rows = [
+
+      [
+        '날짜',
+        '제목',
+        '내용',
+        '저장시간'
+      ],
+
+      ...diaries
+
+      .filter(
+        x=>!x.hidden
+      )
+
+      .sort(
+        (a,b)=>
+          a.date.localeCompare(
+            b.date
+          )
+      )
+
+      .map(
+        x=>[
+          x.date,
+          x.title || '',
+          x.content || '',
+          tm(x.updated || x.created)
+        ]
+      )
+
+    ];
 
 
- const c=
-  '\ufeff'+
-  r
-  .map(
-   z=>
-    z.map(
-     v=>
-      '"'+
-      String(v??'')
-      .replace(
-       /"/g,
-       '""'
-      )+
-      '"'
-    )
-    .join(',')
-  )
-  .join('\n');
+    const csv =
+      '\ufeff' +
+
+      rows
+
+      .map(
+        row=>
+          row
+          .map(
+            value=>
+              '"' +
+              String(value ?? '')
+              .replace(
+                /"/g,
+                '""'
+              )
+              +
+              '"'
+          )
+          .join(',')
+      )
+
+      .join('\n');
 
 
- dl(
-  new Blob(
-   [c],
-   {
-    type:'text/csv;charset=utf-8'
-   }
-  ),
-  '나의_일기.csv'
- );
+    dl(
+      new Blob(
+        [csv],
+        {
+          type:'text/csv;charset=utf-8'
+        }
+      ),
+      '나의_일기.csv'
+    );
+
+  }
+  catch(e){
+
+    console.error(e);
+
+    alert(
+      'Excel 백업을 만들지 못했습니다.'
+    );
+
+  }
 
 }
 
 
-/* ================================
+/* =====================================
    이벤트
-================================ */
+===================================== */
 
-$('unlock').onclick=unlock;
-
-
-$('pw').onkeydown=e=>{
-
- if(e.key==='Enter')
-  unlock();
-
-};
+$('unlock').onclick =
+  unlock;
 
 
-$('save').onclick=save;
+$('pw').onkeydown =
+  e=>{
+
+    if(e.key==='Enter'){
+      unlock();
+    }
+
+  };
 
 
-$('q').oninput=render;
+$('save').onclick =
+  save;
 
 
-$('searchDate').onchange=
- render;
+$('q').oninput =
+  render;
 
 
-$('reset').onclick=()=>{
-
- $('q').value='';
-
- $('searchDate').value='';
-
- render();
-
-};
+$('searchDate').onchange =
+  render;
 
 
-$('toggleHidden').onclick=()=>{
+$('reset').onclick =
+  ()=>{
 
- showHidden=!showHidden;
+    $('q').value = '';
 
- render();
+    $('searchDate').value = '';
 
-};
+    render();
 
-
-$('syncNow').onclick=
- syncAll;
-
-
-$('list').onclick=
- action;
+  };
 
 
-$('files').onchange=()=>{
+$('toggleHidden').onclick =
+  ()=>{
 
- $('fileInfo').textContent=
-  `새 첨부 ${$('files').files.length}개`;
+    showHidden =
+      !showHidden;
 
-};
+    render();
 
-
-$('word').onclick=
- word;
-
-
-$('excel').onclick=
- excel;
+  };
 
 
-/* ================================
-   인터넷 복구 시 자동 동기화
-================================ */
-
-window.addEventListener(
- 'online',
- ()=>{
-
-  if(password){
-
-   status(
-    '인터넷 연결됨 · 동기화 중…'
-   );
-
-   setTimeout(
-    syncAll,
-    500
-   );
-
-  }
-
- }
-);
+$('list').onclick =
+  action;
 
 
-/* 앱을 다시 열었을 때 동기화 */
+$('files').onchange =
+  ()=>{
 
-document.addEventListener(
- 'visibilitychange',
- ()=>{
+    const n =
+      $('files').files.length;
 
-  if(
-   !document.hidden &&
-   password &&
-   navigator.onLine
-  ){
 
-   setTimeout(
-    syncAll,
-    700
-   );
+    $('fileInfo').textContent =
+      n
+      ? `새 첨부 ${n}개`
+      : '';
 
-  }
+  };
 
- }
-);
+
+$('word').onclick =
+  word;
+
+
+$('excel').onclick =
+  excel;
 
 </script>
 
